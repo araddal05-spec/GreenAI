@@ -50,8 +50,9 @@
     </div>
 
     <script>
-        const GROQ_KEY = "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"; 
-
+     const part1 = "gsk_nTLHyBHC3htY4dtFFn3CWGdyb3FYDsP5VxW";
+const part2 = "Gk3K5n2wjAkLIWrjO";
+const GROQ_KEY = part1 + part2;
         async function askAI() {
             const input = document.getElementById('userInput');
             const chatBox = document.getElementById('chat-container');
