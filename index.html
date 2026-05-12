@@ -41,81 +41,110 @@
 
         <div id="chat-container"></div>
 
+        <!-- UPDATE: Added the Stop button and changed the Send button slightly -->
         <div class="input-wrapper">
             <div class="input-box">
                 <input type="text" id="userInput" placeholder="Message GreenAI..." autocomplete="off">
                 <button id="sendBtn" onclick="askAI()">Send</button>
+                <!-- The Stop button (hidden by default) -->
+                <button id="stopBtn" onclick="stopAI()" style="display:none; background: #ff4d4d; margin-left: 8px;">Stop</button>
             </div>
         </div>
+        
+        <style>
+            /* Optional: styling for disabled state */
+            button:disabled { background: #555; cursor: not-allowed; color: #888; }
+        </style>
+
     </div>
 
 <script>
-    // 1. Removed .js extension
     const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat";
+    let controller; // Global variable to store the AbortController
     
     async function askAI() {
         const input = document.getElementById('userInput');
         const chatBox = document.getElementById('chat-container');
         const welcome = document.getElementById('welcome');
         const btn = document.getElementById('sendBtn');
+        const stopBtn = document.getElementById('stopBtn'); // Get Stop button
         
         if (!input.value.trim()) return;
-
+    
         if(welcome) welcome.style.display = "none";
-        btn.disabled = true;
+        
+        // UI Switch: Hide Send, Show Stop
+        btn.style.display = "none";
+        stopBtn.style.display = "block";
+    
         const userText = input.value;
         input.value = "";
-
+    
         chatBox.innerHTML += `<div class="msg"><span class="user-label">You</span>${userText}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
+        controller = new AbortController();
+    
         try {
             const response = await fetch(BACKEND_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    messages: [{role: "user", content: userText}]
-                })
+                signal: controller.signal, // Connects the Stop button
+                body: JSON.stringify({ messages: [{role: "user", content: userText}] })
             });
     
-            const data = await response.json();
-            
-            // Fixed error handling
-            if (data.error) {
-                throw new Error(typeof data.error === 'string' ? data.error : (data.error.message || "API Error"));
-            }
-
-            // Ensure the response structure exists
-            if (!data.choices || !data.choices[0]) {
-                throw new Error("Invalid response from AI");
-            }
-
-            const aiText = data.choices[0].message.content;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
             const aiDiv = document.createElement('div');
             aiDiv.className = 'msg';
             aiDiv.innerHTML = `<span class="ai-label">GreenAI</span>`;
             chatBox.appendChild(aiDiv);
-            
-            let i = 0;
-            function type() {
-                if (i < aiText.length) {
-                    aiDiv.innerHTML += aiText.charAt(i);
-                    i++;
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    setTimeout(type, 10);
-                } else {
-                    btn.disabled = false;
+    
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+    
+                const chunk = decoder.decode(value);
+                // Groq streams send "data: {json}" lines. This regex extracts the text.
+                const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                for (const line of lines) {
+                    if (line.includes('[DONE]')) break;
+                    try {
+                        const json = JSON.parse(line.replace('data: ', ''));
+                        const content = json.choices[0].delta.content;
+                        if (content) {
+                            aiDiv.innerHTML += content;
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }
+                    } catch (e) { /* ignore partial chunks */ }
                 }
             }
-            type();
-
         } catch (error) {
-            console.error(error);
-            chatBox.innerHTML += `<div style="color:red; margin-bottom: 20px;"><b>Error:</b> ${error.message || "Connection failed."}</div>`;
-            btn.disabled = false;
+            if (error.name === 'AbortError') {
+                chatBox.innerHTML += `<div style="color:orange;"><i>Stopped.</i></div>`;
+            }
+        } finally {
+            resetUI(); // Switch back to "Send" button
         }
     }
-
+    
+    // Function to trigger the stop
+    function stopAI() {
+        if (controller) {
+            controller.abort(); // Cancels the Fetch request
+        }
+        if (window.stopTypewriter) {
+            window.stopTypewriter(); // Stops the visual typing
+        }
+        resetUI();
+    }
+    
+    // Helper to switch buttons back
+    function resetUI() {
+        document.getElementById('sendBtn').style.display = "block";
+        document.getElementById('stopBtn').style.display = "none";
+    }
+    
     document.getElementById("userInput").addEventListener("keypress", (e) => {
         if (e.key === "Enter") askAI();
     });
