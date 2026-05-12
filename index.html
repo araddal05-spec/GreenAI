@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GreenAI</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #212121; color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #sidebar { width: 260px; background: #171717; padding: 20px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid #333; }
         .new-chat { border: 1px solid #4d4d4d; padding: 12px; border-radius: 8px; cursor: pointer; text-align: left; margin-bottom: 20px; font-size: 0.9rem; }
         .sidebar-item { padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: #ececf1; }
@@ -22,6 +25,47 @@
         .msg { margin-bottom: 35px; line-height: 1.5; }
         .ai-label { color: #00ff88; font-weight: bold; display: block; margin-bottom: 5px; }
         .user-label { color: #aaa; font-weight: bold; display: block; margin-bottom: 5px; }
+
+        body { 
+            font-family: 'Comfortaa', cursive; 
+            background: #212121; 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+        
+        .brand-text {
+            font-family: 'Comfortaa', cursive;
+            font-size: 1.2rem;
+            font-weight: 700; /* Bolder weight for the brand name */
+            color: #00ff88;
+            cursor: pointer;
+        }
+        
+        input, button, .msg {
+            font-family: 'Comfortaa', cursive;
+        }
+        
+        #top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent; /* Keeps your existing background visible */
+            z-index: 10;
+        }
+        
+        .version-tag {
+            color: #888;
+            font-size: 0.9rem;
+            margin-left: 4px;
+        }
     </style>
 </head>
 <body>
@@ -57,32 +101,6 @@
         
         <style>
             button:disabled { background: #555; cursor: not-allowed; color: #888; }
-            
-            #top-bar {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                padding: 15px 25px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                background: transparent; /* Keeps your existing background visible */
-                z-index: 10;
-            }
-            
-            .brand-text {
-                font-size: 1.1rem;
-                font-weight: 600;
-                color: #00ff88; /* Your green font */
-                cursor: pointer;
-            }
-            
-            .version-tag {
-                color: #888;
-                font-size: 0.9rem;
-                margin-left: 4px;
-            }
         </style>
 
     </div>
