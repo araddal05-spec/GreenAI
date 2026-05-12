@@ -50,11 +50,8 @@
     </div>
 
     <script>
-        // THE HIDDEN KEY
-        const part1 = "gsk_gWFljFivE7yaudqRqa9fWGdyb3FY5Vjg";
-        const part2 = "A9uNHbk3e8bdpJSVaLCr";
-        const GROQ_KEY = part1 + part2;
-
+        const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat.js";
+        
         async function askAI() {
             const input = document.getElementById('userInput');
             const chatBox = document.getElementById('chat-container');
@@ -70,8 +67,6 @@
 
             chatBox.innerHTML += `<div class="msg"><span class="user-label">You</span>${userText}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-
-            const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat.js";
 
             try {
                 // FIXED: Full API address
