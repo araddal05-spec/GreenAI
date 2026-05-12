@@ -60,83 +60,110 @@
 
 <script>
     const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat";
-    let controller; // Global variable to store the AbortController
+    
+    let controller;
+    let typingQueue = []; // Buffer to hold incoming text
+    let typingInterval = null;
     
     async function askAI() {
         const input = document.getElementById('userInput');
         const chatBox = document.getElementById('chat-container');
         const welcome = document.getElementById('welcome');
         const btn = document.getElementById('sendBtn');
-        const stopBtn = document.getElementById('stopBtn'); // Get Stop button
+        const stopBtn = document.getElementById('stopBtn');
         
         if (!input.value.trim()) return;
     
         if(welcome) welcome.style.display = "none";
-        
-        // UI Switch: Hide Send, Show Stop
         btn.style.display = "none";
         stopBtn.style.display = "block";
     
         const userText = input.value;
         input.value = "";
+        typingQueue = []; // Reset queue for new message
     
         chatBox.innerHTML += `<div class="msg"><span class="user-label">You</span>${userText}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
-
-        controller = new AbortController();
     
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'msg';
+        aiDiv.innerHTML = `<span class="ai-label">GreenAI</span><span class="ai-content"></span>`;
+        chatBox.appendChild(aiDiv);
+        const contentSpan = aiDiv.querySelector('.ai-content');
+    
+        // --- START TYPEWRITER ANIMATION ---
+        typingInterval = setInterval(() => {
+            if (typingQueue.length > 0) {
+                const char = typingQueue.shift();
+                contentSpan.innerHTML += char;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }, 15); // Adjust this number (ms) to change typing speed
+    
+        controller = new AbortController();
+        
         try {
             const response = await fetch(BACKEND_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                signal: controller.signal, // Connects the Stop button
+                signal: controller.signal,
                 body: JSON.stringify({ messages: [{role: "user", content: userText}] })
             });
     
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            const aiDiv = document.createElement('div');
-            aiDiv.className = 'msg';
-            aiDiv.innerHTML = `<span class="ai-label">GreenAI</span>`;
-            chatBox.appendChild(aiDiv);
     
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
     
                 const chunk = decoder.decode(value);
-                // Groq streams send "data: {json}" lines. This regex extracts the text.
-                const lines = chunk.split('\n').filter(line => line.trim() !== '');
+                const lines = chunk.split('\n');
+                
                 for (const line of lines) {
-                    if (line.includes('[DONE]')) break;
-                    try {
-                        const json = JSON.parse(line.replace('data: ', ''));
-                        const content = json.choices[0].delta.content;
-                        if (content) {
-                            aiDiv.innerHTML += content;
-                            chatBox.scrollTop = chatBox.scrollHeight;
-                        }
-                    } catch (e) { /* ignore partial chunks */ }
+                    if (line.trim() === '' || line.includes('[DONE]')) continue;
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const json = JSON.parse(line.replace('data: ', ''));
+                            const content = json.choices[0].delta.content;
+                            if (content) {
+                                // Push each character into the queue
+                                typingQueue.push(...content.split(''));
+                            }
+                        } catch (e) { /* ignore partial JSON */ }
+                    }
                 }
             }
         } catch (error) {
             if (error.name === 'AbortError') {
-                chatBox.innerHTML += `<div style="color:orange;"><i>Stopped.</i></div>`;
+                typingQueue = []; // Clear queue so typing stops
+                contentSpan.innerHTML += " <i>(Stopped)</i>";
+            } else {
+                console.error(error);
             }
         } finally {
-            resetUI(); // Switch back to "Send" button
+            // Wait for queue to empty before hiding stop button, or just reset
+            checkIfFinished();
+        }
+    
+        function checkIfFinished() {
+            const check = setInterval(() => {
+                if (typingQueue.length === 0) {
+                    clearInterval(check);
+                    clearInterval(typingInterval);
+                    btn.style.display = "block";
+                    stopBtn.style.display = "none";
+                }
+            }, 100);
         }
     }
     
-    // Function to trigger the stop
     function stopAI() {
-        if (controller) {
-            controller.abort(); // Cancels the Fetch request
-        }
-        if (window.stopTypewriter) {
-            window.stopTypewriter(); // Stops the visual typing
-        }
-        resetUI();
+        if (controller) controller.abort();
+        typingQueue = []; // Immediately stop the typewriter
+        clearInterval(typingInterval);
+        document.getElementById('sendBtn').style.display = "block";
+        document.getElementById('stopBtn').style.display = "none";
     }
     
     // Helper to switch buttons back
