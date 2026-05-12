@@ -49,69 +49,78 @@
         </div>
     </div>
 
-    <script>
-        const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat.js";
+<script>
+    // 1. Removed .js extension
+    const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat";
+    
+    async function askAI() {
+        const input = document.getElementById('userInput');
+        const chatBox = document.getElementById('chat-container');
+        const welcome = document.getElementById('welcome');
+        const btn = document.getElementById('sendBtn');
         
-        async function askAI() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chat-container');
-            const welcome = document.getElementById('welcome');
-            const btn = document.getElementById('sendBtn');
+        if (!input.value.trim()) return;
+
+        if(welcome) welcome.style.display = "none";
+        btn.disabled = true;
+        const userText = input.value;
+        input.value = "";
+
+        chatBox.innerHTML += `<div class="msg"><span class="user-label">You</span>${userText}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const response = await fetch(BACKEND_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: [{role: "user", content: userText}]
+                })
+            });
+    
+            const data = await response.json();
             
-            if (!input.value.trim()) return;
-
-            if(welcome) welcome.style.display = "none";
-            btn.disabled = true;
-            const userText = input.value;
-            input.value = "";
-
-            chatBox.innerHTML += `<div class="msg"><span class="user-label">You</span>${userText}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                // FIXED: Full API address
-                const response = await fetch(BACKEND_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        messages: [{role: "user", content: userText}]
-                    })
-                });
-        
-                const data = await response.json();
-                
-                if (data.error) throw new Error(data.error.message);
-
-                const aiText = data.choices[0].message.content;
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'msg';
-                aiDiv.innerHTML = `<span class="ai-label">GreenAI</span>`;
-                chatBox.appendChild(aiDiv);
-                
-                let i = 0;
-                function type() {
-                    if (i < aiText.length) {
-                        aiDiv.innerHTML += aiText.charAt(i);
-                        i++;
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                        setTimeout(type, 10);
-                    } else {
-                        btn.disabled = false;
-                    }
-                }
-                type();
-
-            } catch (error) {
-                console.error(error);
-                chatBox.innerHTML += `<div style="color:red; margin-bottom: 20px;"><b>Error:</b> ${error.message || "Connection failed."}</div>`;
-                btn.disabled = false;
+            // Fixed error handling
+            if (data.error) {
+                throw new Error(typeof data.error === 'string' ? data.error : (data.error.message || "API Error"));
             }
-        }
 
-        document.getElementById("userInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") askAI();
-        });
-    </script>
+            // Ensure the response structure exists
+            if (!data.choices || !data.choices[0]) {
+                throw new Error("Invalid response from AI");
+            }
+
+            const aiText = data.choices[0].message.content;
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg';
+            aiDiv.innerHTML = `<span class="ai-label">GreenAI</span>`;
+            chatBox.appendChild(aiDiv);
+            
+            let i = 0;
+            function type() {
+                if (i < aiText.length) {
+                    aiDiv.innerHTML += aiText.charAt(i);
+                    i++;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    setTimeout(type, 10);
+                } else {
+                    btn.disabled = false;
+                }
+            }
+            type();
+
+        } catch (error) {
+            console.error(error);
+            chatBox.innerHTML += `<div style="color:red; margin-bottom: 20px;"><b>Error:</b> ${error.message || "Connection failed."}</div>`;
+            btn.disabled = false;
+        }
+    }
+
+    document.getElementById("userInput").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") askAI();
+    });
+</script>
+
 </body>
 </html>
  
