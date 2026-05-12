@@ -50,52 +50,22 @@
     </div>
 
     <script>
-        // THE HIDDEN KEY
-        const part1 = "gsk_gWFljFivE7yaudqRqa9fWGdyb3FY5Vjg";
-        const part2 = "A9uNHbk3e8bdpJSVaLCr";
-        const GROQ_KEY = part1 + part2;
 
-        async function askAI() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chat-container');
-            const welcome = document.getElementById('welcome');
-            const btn = document.getElementById('sendBtn');
-            
-            if (!input.value.trim()) return;
+        // Replace this with your deployed backend URL (e.g., https://render.com)
+        const BACKEND_URL = "https://green-ai-backend.vercel.app/api/chat.js";
+        
+        try {
+            const response = await fetch(BACKEND_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages: [{role: "user", content: userText}]
+                })
+            });
+        
+            const data = await response.json();
+            // ... rest of your typing logic stays the same
 
-            if(welcome) welcome.style.display = "none";
-            btn.disabled = true;
-            const userText = input.value;
-            input.value = "";
-
-            chatBox.innerHTML += `<div class="msg"><span class="user-label">You</span>${userText}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                // We use a CORS proxy to bypass the browser restriction for testing
-                const proxyUrl = "https://corsproxy.io?";
-                const apiUrl = "https://groq.com";
-            
-                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + GROQ_KEY
-                    },
-                    body: JSON.stringify({
-                        model: "llama3-8b-8192",
-                        messages: [{role: "user", content: userText}]
-                    })
-                });
-            
-                const data = await response.json();
-                // ... rest of your code
-            } catch (error) {
-                console.error(error);
-                chatBox.innerHTML += `<div style="color:red; margin-bottom: 20px;"><b>Error:</b> ${error.message || "Connection failed."}</div>`;
-                btn.disabled = false;
-            }
-        }
 
         document.getElementById("userInput").addEventListener("keypress", (e) => {
             if (e.key === "Enter") askAI();
