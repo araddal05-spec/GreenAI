@@ -90,7 +90,7 @@
             
                 const data = await response.json();
                 // ... rest of your code
-             catch (error) {
+            } catch (error) {
                 console.error(error);
                 chatBox.innerHTML += `<div style="color:red; margin-bottom: 20px;"><b>Error:</b> ${error.message || "Connection failed."}</div>`;
                 btn.disabled = false;
