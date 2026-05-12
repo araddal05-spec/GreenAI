@@ -34,14 +34,18 @@
     </div>
 
     <div id="main">
+        <div id="top-bar">
+            <span class="brand-text">GreenAI</span>
+            <span class="version-tag">Llama 3.1</span>
+        </div>
+    
         <div id="welcome">
             <img src="https://dig.watch" alt="Logo" class="logo">
             <h1>What are you working on?</h1>
         </div>
-
+    
         <div id="chat-container"></div>
 
-        <!-- UPDATE: Added the Stop button and changed the Send button slightly -->
         <div class="input-wrapper">
             <div class="input-box">
                 <input type="text" id="userInput" placeholder="Message GreenAI..." autocomplete="off">
@@ -52,8 +56,33 @@
         </div>
         
         <style>
-            /* Optional: styling for disabled state */
             button:disabled { background: #555; cursor: not-allowed; color: #888; }
+            
+            #top-bar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                padding: 15px 25px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: transparent; /* Keeps your existing background visible */
+                z-index: 10;
+            }
+            
+            .brand-text {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #00ff88; /* Your green font */
+                cursor: pointer;
+            }
+            
+            .version-tag {
+                color: #888;
+                font-size: 0.9rem;
+                margin-left: 4px;
+            }
         </style>
 
     </div>
