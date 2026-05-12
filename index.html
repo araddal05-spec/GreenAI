@@ -72,8 +72,11 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // FIXED: Full API address
-                const response = await fetch("https://groq.com", {
+                // We use a CORS proxy to bypass the browser restriction for testing
+                const proxyUrl = "https://corsproxy.io?";
+                const apiUrl = "https://groq.com";
+            
+                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -84,31 +87,10 @@
                         messages: [{role: "user", content: userText}]
                     })
                 });
-
+            
                 const data = await response.json();
-                
-                if (data.error) throw new Error(data.error.message);
-
-                const aiText = data.choices[0].message.content;
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'msg';
-                aiDiv.innerHTML = `<span class="ai-label">GreenAI</span>`;
-                chatBox.appendChild(aiDiv);
-                
-                let i = 0;
-                function type() {
-                    if (i < aiText.length) {
-                        aiDiv.innerHTML += aiText.charAt(i);
-                        i++;
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                        setTimeout(type, 10);
-                    } else {
-                        btn.disabled = false;
-                    }
-                }
-                type();
-
-            } catch (error) {
+                // ... rest of your code
+             catch (error) {
                 console.error(error);
                 chatBox.innerHTML += `<div style="color:red; margin-bottom: 20px;"><b>Error:</b> ${error.message || "Connection failed."}</div>`;
                 btn.disabled = false;
